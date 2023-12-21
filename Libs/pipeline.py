@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-
+from typing import Union
 from .inference import YOLOInference, SupremeYOLOInference
 from pathlib import Path
 
@@ -33,13 +33,23 @@ class Pipeline:
 
 
     def predict(self,
-                img_path: Path,
+                img_path: Union[Path, np.ndarray, str],
                 img_sizes_insulators=(640, 960, 1500, 2000, 2500, 3000),
                 img_sizes_broken=(640, 960),
                 ):
 
-        img = cv2.imread(img_path.as_posix())
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        if isinstance(img_path, Path):
+            img = cv2.imread(img_path.as_posix())
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        elif isinstance(img_path, str):
+            img = cv2.imread(img_path)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        elif isinstance(img_path, np.ndarray):
+            img = img_path
+        else:
+            raise TypeError('Unsupported image type. Should be Path or np.ndarray or str')
+
+
 
         result_isolator = self.supreme_yolo.predict(img, image_sizes=img_sizes_insulators)
 
@@ -51,9 +61,6 @@ class Pipeline:
 
             x_u, y_u, x_l, y_l = box.astype(int)
             img_patch = img[y_u:y_l, x_u:x_l]
-            # img_patch = cv2.cvtColor(img_patch, cv2.COLOR_RGB2BGR)
-            size = max(img_patch.shape[:2])
-
             broken = self.broken_yolo.predict(img_patch, image_sizes=img_sizes_broken)
             if len(broken)>0:
                 broken[..., [0, 2]] += x_u
