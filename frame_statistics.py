@@ -7,6 +7,7 @@ import cv2
 from typing import Tuple, Union
 from typing import Tuple
 from pathlib import Path
+from Libs import utils
 import sys
 from Libs.pipeline import Pipeline
 
@@ -17,6 +18,7 @@ IMG_PATH = Path(r'data\InnopolisTestImages\DJI_0032.JPG')
 
 if __name__ == '__main__':
 
+    print('Models initialization ...')
     pipeline = Pipeline(
         golden_model_path=Path(r"Models\insulator_gold.pt"),
         base_model_path=Path(r"Models\insulator_base.pt"),
@@ -28,18 +30,21 @@ if __name__ == '__main__':
         conf_broken=0.5,
         iou_broken=0.1,
     )
-
-    # insulator, broken = pipeline.predict(
-    #     IMG_PATH,
-    #     img_sizes_insulators=(1500, 2500),
-    #     img_sizes_broken=(640, 960),
-    # )
+    insulator, broken = pipeline.predict(
+        IMG_PATH,
+        img_sizes_insulators=(1080, 1920),
+        img_sizes_broken=(640, 960),
+        # img_sizes_broken=(480, 640),
+    )
 
     ###
-    print('Models initialization ...')
+    print('Done')
     ###
     # Забираем видео из видео потока
-    cap = cv2.VideoCapture(r'D:\PyProjects\innopolis-high-voltage-challenge\data\video\500_vertical_1[1920x1090_60fps].MP4')
+    cap = cv2.VideoCapture(r'D:\PyProjects\innopolis-high-voltage-challenge\data\video\Dron_FLY_demonstration.mp4')
+    # fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+    out = cv2.VideoWriter('output_video_from_file.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 20, (1920, 1080))
+
     # Забираем видео с мобильного телефона
     # cap = cv2.VideoCapture('http://172.16.74.154:8080/video', cv2.CAP_ANY)
     # cap.set(3, 900)
@@ -55,7 +60,14 @@ if __name__ == '__main__':
     frame_time = time.time()
     frame_time_in_sec = 0
     cnt = 0
+    insulator = [0, 0, 0, 0]
+    broken = [0, 0, 0, 0]
+    #################################################################################
     while cap.isOpened():
+
+        # cnt += 1
+        # if cnt % 2:
+        #     continue
 
         ###
         frame_time = time.time() - frame_time
@@ -72,24 +84,38 @@ if __name__ == '__main__':
         ###
         ret, frame = cap.read()
         original_frame = frame.copy()
+        annotated_frame = original_frame
 
-        if cnt % 40 == 0:
-            file_name = 'real_video_11_frame_' + str(cnt)+'.jpg'
-            output_full_path = Path(OUTPUT_DIR, file_name)
-            print(output_full_path)
-            cv2.imwrite(str(output_full_path), original_frame)
+        insulator, broken = pipeline.predict(
+            original_frame,
+            # img_sizes_insulators=(1500, 2500),
+            img_sizes_insulators=(1080, 1920),
+            # img_sizes_broken=(640, 960),
+            img_sizes_broken=(480, 640),
+        )
 
-        cnt += 1
+        if len(insulator) > 0:
+            coords_insulators = insulator[..., :4].astype(int)
+
+            for block in coords_insulators:
+                annotated_frame = cv2.rectangle(original_frame, block[:2], block[-2:], color=(255, 0, 0), thickness=3)
+
+        if len(broken) > 0:
+            coords_damages = broken[..., :4].astype(int)
+            for block in coords_damages:
+                annotated_frame = cv2.rectangle(original_frame, block[:2], block[-2:], color=(0, 0, 255), thickness=3)
+
+        out.write(annotated_frame)
+        cv2.imshow("Camera", annotated_frame)
+
         print(f'Frame_size = {frame.shape}')
-        # frame = cv2.resize(frame, (900, 900))
-
-        annotated_image = frame
-        cv2.imshow("Camera", annotated_image)
 
         k = cv2.waitKey(30) & 0xff
         if k == 27:
             break
+    #####################################################################
 
     cv2.waitKey(0)
+    out.release()
     cap.release()
     cv2.destroyAllWindows()
