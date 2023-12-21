@@ -7,7 +7,6 @@ IMG_PATH = Path(r'data\InnopolisTestImages\DJI_0032.JPG')
 
 def main():
 
-
     pipeline = Pipeline(
         golden_model_path=Path(r"Models\insulator_gold.pt"),
         base_model_path=Path(r"Models\insulator_base.pt"),
@@ -24,7 +23,6 @@ def main():
         IMG_PATH,
         img_sizes_insulators=(1500, 2500),
         img_sizes_broken=(640, 960),
-
     )
 
     print("Coords for insulator:")

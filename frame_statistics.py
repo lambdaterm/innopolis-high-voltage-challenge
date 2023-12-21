@@ -6,17 +6,40 @@ import matplotlib.pyplot as plt
 import cv2
 from typing import Tuple, Union
 from typing import Tuple
+from pathlib import Path
+import sys
+from Libs.pipeline import Pipeline
 
 ModelResult = Tuple[int, str, float]
 
+OUTPUT_DIR = r'D:\Data\Result'
+IMG_PATH = Path(r'data\InnopolisTestImages\DJI_0032.JPG')
 
 if __name__ == '__main__':
+
+    pipeline = Pipeline(
+        golden_model_path=Path(r"Models\insulator_gold.pt"),
+        base_model_path=Path(r"Models\insulator_base.pt"),
+        broken_model_path=Path(
+            r"Models\insulator_broken_gold.pt"),
+        # broken_model_path=Path(r"D:\ML\ResultModels\Insulators\InsulatorModel\yolo_broken_insulators_m_gold\train5\weights\best.pt"),
+        conf_supreme=0.5,
+        iou_supreme=0.5,
+        conf_broken=0.5,
+        iou_broken=0.1,
+    )
+
+    # insulator, broken = pipeline.predict(
+    #     IMG_PATH,
+    #     img_sizes_insulators=(1500, 2500),
+    #     img_sizes_broken=(640, 960),
+    # )
 
     ###
     print('Models initialization ...')
     ###
     # Забираем видео из видео потока
-    cap = cv2.VideoCapture('IMG_3728.MOV')
+    cap = cv2.VideoCapture(r'D:\PyProjects\innopolis-high-voltage-challenge\data\video\500_vertical_1[1920x1090_60fps].MP4')
     # Забираем видео с мобильного телефона
     # cap = cv2.VideoCapture('http://172.16.74.154:8080/video', cv2.CAP_ANY)
     # cap.set(3, 900)
@@ -31,6 +54,7 @@ if __name__ == '__main__':
     fps = 0
     frame_time = time.time()
     frame_time_in_sec = 0
+    cnt = 0
     while cap.isOpened():
 
         ###
@@ -48,6 +72,14 @@ if __name__ == '__main__':
         ###
         ret, frame = cap.read()
         original_frame = frame.copy()
+
+        if cnt % 40 == 0:
+            file_name = 'real_video_11_frame_' + str(cnt)+'.jpg'
+            output_full_path = Path(OUTPUT_DIR, file_name)
+            print(output_full_path)
+            cv2.imwrite(str(output_full_path), original_frame)
+
+        cnt += 1
         print(f'Frame_size = {frame.shape}')
         # frame = cv2.resize(frame, (900, 900))
 
