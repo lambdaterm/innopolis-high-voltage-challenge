@@ -35,7 +35,7 @@ python3 example.py
 Пример запуска:
 ```shell
 cd src
-python3 main.py input_dir
+python3 main.py --indir input_dir
 ```
 
 По завершении работы `src/main.py` в директории `src` появится файл `result.csv` с сериализованными
