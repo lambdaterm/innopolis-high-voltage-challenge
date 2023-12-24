@@ -10,10 +10,17 @@ import cv2
 class Statistics:
 
     def __init__(self, conf_supreme=0.5, iou_supreme=0.3, conf_broken=0.5, iou_broken=0.1):
+        """
+        initializing pipeline with such parameters
+        """
+
         self.pipeline = Pipeline(
             golden_model_path=Path(r"..\Models\insulator_gold_v2.pt"),
             base_model_path=Path(r"..\Models\insulator_base.pt"),
-            broken_model_path=[Path(r"..\Models\insulator_broken_gold_v2.pt"), Path(r"..\Models\insulator_broken_original_v2.pt")],
+            broken_model_path=[
+                Path(r"..\Models\insulator_broken_gold_v2.pt"),
+                Path(r"..\Models\insulator_broken_original_v2.pt")
+            ],
             conf_supreme=conf_supreme,
             iou_supreme=iou_supreme,
             conf_broken=conf_broken,
@@ -23,7 +30,16 @@ class Statistics:
         print("[+] Pipeline loaded")
 
 
-    def process_folder(self, folder_from: Union[Path,str], folder_to:Union[Path,str]):
+    def process_folder(self, folder_from: Union[Path,str], folder_to:Union[Path,str], plot=True):
+        """
+        Function runs through the folder and detects broken insulators.
+        Results are written in xywh format into pandas Dataframe
+
+        folder_from - where to look for images,
+        folder_to - where to save images,
+        plot - should we plot marks on images, if False, then nothing will be written into folder_to
+        """
+
         if isinstance(folder_from, str):
             folder_from = Path(folder_from)
 
@@ -53,15 +69,16 @@ class Statistics:
 
 
                 # plotting detection
-                for box in broken_iso[..., :4]:
-                    box = box[:4].astype(int)
-                    img = cv2.rectangle(img, box[:, 0:2], box[:, 2:4], color=(255, 0, 0), thickness=3)
+                if plot:
+                    for box in broken_iso[..., :4]:
+                        box = box[:4].astype(int)
+                        img = cv2.rectangle(img, box[:, 0:2], box[:, 2:4], color=(255, 0, 0), thickness=3)
 
-                folder_to.mkdir(parents=True, exist_ok=True)
-                cv2.imwrite(
-                    folder_to.joinpath(img_file.name).as_posix(),
-                    cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-                )
+                    folder_to.mkdir(parents=True, exist_ok=True)
+                    cv2.imwrite(
+                        folder_to.joinpath(img_file.name).as_posix(),
+                        cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+                    )
 
 
                 # collecting info and converting to xywh format
@@ -83,6 +100,12 @@ class Statistics:
         print('[+] Done calculating ISOs')
 
     def to_csv(self, filename: Path):
+        """
+        Generates .csv file accorind to submit format
+        header - file_name,rbbox,probability
+
+
+        """
 
         if not hasattr(self, 'result_df'):
             print('[!] Dataframe with results not yet generated. Pls call process_folder function')
