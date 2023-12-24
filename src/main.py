@@ -1,5 +1,8 @@
+import shutil
 import os
 
+shutil.copy(os.path.join('utils', 'conv.py'),
+        os.path.join('..', 'venv', 'lib', 'site-packages', 'ultralytics', 'nn', 'modules', 'conv.py'))
 from utils.utils import xyxy2xywh
 from utils.pipeline import Pipeline
 import pandas as pd
@@ -8,6 +11,8 @@ from pathlib import Path
 from typing import Union
 from tqdm import tqdm
 import cv2
+from argparse import ArgumentParser
+
 
 class Statistics:
 
@@ -125,6 +130,11 @@ class Statistics:
 
 
 if __name__ == '__main__':
+    parser = ArgumentParser(description='innopolis-high-voltage-challenge')
+    parser.add_argument('indir', type=str, help='Input dir with images')
+    parser.add_argument('outdir', type=str, help='Output dir for visualization')
+    args = parser.parse_args()
+
     s = Statistics()
-    s.process_folder(r'..\data\quick', '.')
+    s.process_folder(str(args.indir).replace('\\', os.sep), str(args.outdir).replace('\\', os.sep))
     s.to_csv('result.csv')
