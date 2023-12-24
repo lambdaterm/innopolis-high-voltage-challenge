@@ -1,7 +1,12 @@
+import shutil
+import os
+
+shutil.copy('conv.py',
+        os.path.join('venv', 'lib', 'site-packages', 'ultralytics', 'nn', 'modules', 'conv.py'))
+
 import sys
 from Libs.pipeline import Pipeline
 from pathlib import Path
-
 
 IMG_PATH = Path(r'data\InnopolisTestImages\DJI_0032.JPG')
 
