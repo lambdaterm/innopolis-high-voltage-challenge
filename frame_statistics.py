@@ -7,9 +7,8 @@ import cv2
 from typing import Tuple, Union
 from typing import Tuple
 from pathlib import Path
-from utils import utils
 import sys
-from utils.pipeline import Pipeline
+from src.utils.pipeline import Pipeline
 
 ModelResult = Tuple[int, str, float]
 
@@ -20,11 +19,11 @@ if __name__ == '__main__':
 
     print('Models initialization ...')
     pipeline = Pipeline(
-        golden_model_path=Path(r"model\insulator_gold.pt"),
-        base_model_path=Path(r"model\insulator_base.pt"),
+        golden_model_path=Path(r"src\model\insulator_gold.pt"),
+        base_model_path=Path(r"src\model\insulator_base.pt"),
         broken_model_path=[
-            Path(r"model\insulator_broken_gold.pt"),
-            Path(r"model\insulator_broken_original.pt"),
+            Path(r"src\model\insulator_broken_gold.pt"),
+            Path(r"src\model\insulator_broken_original.pt"),
             ],
         # broken_model_path=Path(r"D:\ML\ResultModels\Insulators\InsulatorModel\yolo_broken_insulators_m_gold\train5\weights\best.pt"),
         conf_supreme=0.5,

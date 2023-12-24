@@ -5,18 +5,20 @@ shutil.copy('conv.py',
         os.path.join('venv', 'lib', 'site-packages', 'ultralytics', 'nn', 'modules', 'conv.py'))
 
 import sys
-from Libs.pipeline import Pipeline
+from src.utils.pipeline import Pipeline
 from pathlib import Path
 
-IMG_PATH = Path(r'data\InnopolisTestImages\DJI_0032.JPG')
+IMG_PATH = Path(r'..\data\InnopolisTestImages\DJI_0032.JPG')
 
 def main():
 
     pipeline = Pipeline(
-        golden_model_path=Path(r"Models\insulator_gold.pt"),
-        base_model_path=Path(r"Models\insulator_base.pt"),
-        broken_model_path=Path(
-            r"Models\insulator_broken_gold.pt"),
+        golden_model_path=Path(r"src\model\insulator_gold.pt"),
+        base_model_path=Path(r"src\model\insulator_base.pt"),
+        broken_model_path=[
+            Path(r"src\model\insulator_broken_gold.pt"),
+            Path(r"src\model\insulator_broken_original.pt"),
+            ],
         # broken_model_path=Path(r"D:\ML\ResultModels\Insulators\InsulatorModel\yolo_broken_insulators_m_gold\train5\weights\best.pt"),
         conf_supreme=0.5,
         iou_supreme=0.5,
