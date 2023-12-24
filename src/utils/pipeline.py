@@ -34,9 +34,10 @@ class Pipeline:
 
     def predict(self,
                 img_path: Union[Path, np.ndarray, str],
-                img_sizes_insulators=(640, 960, 1500, 2000, 2500, 3000),
+                img_sizes_insulators=(640, 960, 1500, 2500, 3500),
                 img_sizes_broken=(640, 960),
                 broken_coords_fix=(1.7, 1.3),
+                tta=True
                 ):
 
         if isinstance(img_path, Path):
@@ -50,6 +51,11 @@ class Pipeline:
         else:
             raise TypeError('Unsupported image type. Should be Path or np.ndarray or str')
 
+
+
+        max_size = max(img.shape[:2])
+
+        img_sizes_broken = [img_size for img_size in img_sizes_insulators if img_size <= max_size]
 
 
         result_isolator = self.supreme_yolo.predict(img, image_sizes=img_sizes_insulators)
@@ -73,7 +79,7 @@ class Pipeline:
             img_patch = img[y_u:y_l, x_u:x_l]
             # img_patch = cv2.cvtColor(img_patch, cv2.COLOR_RGB2BGR)
 
-            broken = self.broken_yolo.predict(img_patch, image_sizes=img_sizes_broken)
+            broken = self.broken_yolo.predict(img_patch, image_sizes=img_sizes_broken, tta=True)
             if len(broken)>0:
                 broken[..., [0, 2]] += x_u
                 broken[..., [1, 3]] += y_u

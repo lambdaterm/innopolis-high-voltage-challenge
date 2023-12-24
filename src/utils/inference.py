@@ -120,9 +120,11 @@ class YOLOInference:
         self.postprocess = YoloDetectorNMS(labels=labels, cls=conf, iou=iou, verbose=False)
 
 
-    def _predict(self, img_path: Path, image_size=640):
+    def _predict(self, img: Union[Path, np.ndarray], image_size=640):
 
-        img_prepared, pad_ratio, pad_extra, pad_to_size, _ = self.preprocess(img_path,
+
+
+        img_prepared, pad_ratio, pad_extra, pad_to_size, _ = self.preprocess(img,
                                                                              image_size=image_size,
                                                                              auto=False,
                                                                              scaleup=True)
@@ -141,26 +143,79 @@ class YOLOInference:
         return detections
 
 
-    def predict(self, img_path: Union[Path, np.ndarray], image_sizes=(640, 960, 1500)):
+    def predict(self, img_path: Union[Path, np.ndarray], image_sizes=(640, 960, 1500), tta=False):
 
         det = []
         for image_size in image_sizes:
+
             result = self._predict(img_path, image_size=image_size)
             if len(result) > 0:
                 det.append(result)
 
+            if tta:
+                img_90 = cv2.rotate(img_path.copy(), cv2.ROTATE_90_CLOCKWISE)
+                img_180 = cv2.rotate(img_path.copy(), cv2.ROTATE_180)
+                img_270 = cv2.rotate(img_path.copy(), cv2.ROTATE_90_COUNTERCLOCKWISE)
+
+                # 90 degrees
+                result = self._predict(img_90, image_size=image_size)
+                if len(result) > 0:
+                    result[:, :4] = self.rotate90Degcounter(result[:, :4], img_90.shape[1])
+                    det.append(result)
+
+
+
+                # 180 degrees
+                h, w = img_180.shape[:2]
+                c_x, c_y = w // 2, h // 2
+                result = self._predict(img_180, image_size=image_size)
+                if len(result) > 0:
+                    result[:, :4] = np.hstack((self.rotate(result[:, 2:4], (c_x, c_y), degrees=180),
+                                               self.rotate(result[:, :2], (c_x, c_y), degrees=180))).reshape(-1, 4)
+                    det.append(result)
+
+                # -90 degrees
+                result = self._predict(img_270, image_size=image_size)
+                if len(result) > 0:
+                    result[:, :4] = self.rotate90Deg(result[:, :4], img_270.shape[0])
+                    det.append(result)
+
+
+
+
+
         if len(det) > 0:
             det = np.concatenate(det)
+            print(det)
             det = det[self.postprocess.nms(det[..., :4],  det[..., 4:5], self.postprocess.iou)]
-            # det = self.postprocess.nme(det[..., :4],  det[..., 4:5], det[..., 5:6], self.postprocess.iou)
-            # det = det[np.where(det[..., 4] > self.conf)]
-            # det = self.postprocess.nme(det[..., :4],  det[..., 4:5], det[..., 5:6], self.postprocess.iou)
-            # det = det[self.filter_by_area(det[..., :4], area_threshold=4000)]
+            print(det)
         return det
 
+    @staticmethod
+    def rotate(p, origin=(0, 0), degrees=0):
+        angle = np.deg2rad(degrees)
+        R = np.array([[np.cos(angle), -np.sin(angle)],
+                      [np.sin(angle), np.cos(angle)]])
+        o = np.atleast_2d(origin)
+        p = np.atleast_2d(p)
+        return np.squeeze((R @ (p.T - o.T) + o.T).T)
 
-    def filter_by_area(self, coords: np.ndarray, area_threshold=1000):
-        area = (coords[:, 2] - coords[:, 0]) * (coords[:, 3] - coords[:, 1])
-        return np.where(area > area_threshold)
+    @staticmethod
+    def rotate90Degcounter(bndbox, img_width):
+        """Rotates bbox by 90 degrees counterclockwise"""
+        x_min, y_min, x_max, y_max = bndbox[:, 0:1], bndbox[:, 1:2], bndbox[:, 2:3], bndbox[:, 3:4]
+        new_xmin = y_min
+        new_ymin = img_width - x_max
+        new_xmax = y_max
+        new_ymax = img_width - x_min
+        return np.hstack((new_xmin, new_ymin, new_xmax, new_ymax))
 
-
+    @staticmethod
+    def rotate90Deg(bndbox, img_height):
+        """Rotates bbox by 90 degrees clockwise"""
+        x_min, y_min, x_max, y_max = bndbox[:, 0:1], bndbox[:, 1:2], bndbox[:, 2:3], bndbox[:, 3:4]
+        new_xmin = img_height - y_max  # Reflection about center X-line
+        new_ymin = x_min
+        new_xmax = img_height - y_min  # Reflection about center X-line
+        new_ymax = x_max
+        return np.hstack((new_xmin, new_ymin, new_xmax, new_ymax))
