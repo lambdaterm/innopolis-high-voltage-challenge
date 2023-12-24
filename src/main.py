@@ -49,9 +49,9 @@ class Statistics:
             folder_to = Path(folder_to)
 
 
-        result_array = np.empty((0, 6))
+        result_array = np.empty((0, 7))
 
-        print(['[+] Detecting broken ISOs'])
+        print(['[+] Detecting broken ISOs'], flush=True)
         for img_file in tqdm(folder_from.iterdir()):
 
             img = cv2.imread(img_file.as_posix())
@@ -68,8 +68,6 @@ class Statistics:
                 broken_iso = np.array([0., 0., 0., 0., 0.001, 0])
 
             else:
-
-
                 # plotting detection
                 if plot:
                     for box in broken_iso[..., :4]:
@@ -89,11 +87,7 @@ class Statistics:
                 # broken_iso[..., :4] = broken_iso[..., :4].round(5)
 
             filename = np.array([f"{img_file.stem}" for i in range(len(broken_iso))])[..., None]
-            print(filename)
-            print(broken_iso)
-            print(filename.shape, broken_iso.shape)
             result = np.hstack((filename, broken_iso))
-
             result_array = np.vstack((result_array, result))
 
         self.result_df = pd.DataFrame(
@@ -133,3 +127,4 @@ class Statistics:
 if __name__ == '__main__':
     s = Statistics()
     s.process_folder(r'..\data\quick', '.')
+    s.to_csv('result.csv')
