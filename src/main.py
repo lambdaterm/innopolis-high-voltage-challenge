@@ -90,12 +90,13 @@ class Statistics:
             result = np.hstack((filename, broken_iso))
             result_array = np.vstack((result_array, result))
 
+
         self.result_df = pd.DataFrame(
             columns=['file_name', 'x', 'y', 'w', 'h', 'probability', 'obj_class'],
             data=result_array
         )
 
-        self.result_df[self.result_df.columns[1:5]] = self.result_df[self.result_df.columns[1:5]].astype(np.float32)
+        self.result_df[self.result_df.columns[1:7]] = self.result_df[self.result_df.columns[1:7]].astype(np.float32)
         print('[+] Done calculating ISOs')
 
     def to_csv(self, filename: Path):
@@ -110,13 +111,12 @@ class Statistics:
             print('[!] Dataframe with results not yet generated. Pls call process_folder function')
 
         df_grouped = self.result_df.groupby('file_name').apply(
-            lambda x: (x.iloc[:, 1:5].values.tolist(), x.iloc[:, 5:].values.reshape(-1).tolist()), )
+            lambda x: (x.iloc[:, 1:5].values.tolist(), x.iloc[:, 5:6].values.reshape(-1).tolist()), )
         df_grouped = pd.DataFrame(
             data=df_grouped.tolist(),
             index=df_grouped.index,
             columns=['rbbox', 'probability'],
         )
-        df_grouped.reset_index(inplace=True)
         df_grouped.to_csv(filename, quoting=0, index=True)
 
         # Возможно тут надо побороться с ошибками ковычек
