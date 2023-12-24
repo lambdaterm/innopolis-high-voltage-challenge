@@ -8,7 +8,7 @@ import sys
 from src.utils.pipeline import Pipeline
 from pathlib import Path
 
-IMG_PATH = Path(r'..\data\InnopolisTestImages\DJI_0032.JPG')
+IMG_PATH = Path(r'data\InnopolisTestImages\DJI_0032.JPG')
 
 def main():
 
