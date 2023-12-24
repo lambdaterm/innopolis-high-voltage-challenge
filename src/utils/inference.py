@@ -126,7 +126,7 @@ class YOLOInference:
 
         img_prepared, pad_ratio, pad_extra, pad_to_size, _ = self.preprocess(img,
                                                                              image_size=image_size,
-                                                                             auto=False,
+                                                                             auto=True,
                                                                              scaleup=True)
         padding_meta = {
             'pad_to_size': pad_to_size,
@@ -180,15 +180,9 @@ class YOLOInference:
                     result[:, :4] = self.rotate90Deg(result[:, :4], img_270.shape[0])
                     det.append(result)
 
-
-
-
-
         if len(det) > 0:
             det = np.concatenate(det)
-            print(det)
             det = det[self.postprocess.nms(det[..., :4],  det[..., 4:5], self.postprocess.iou)]
-            print(det)
         return det
 
     @staticmethod

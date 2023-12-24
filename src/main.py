@@ -3,6 +3,7 @@ import os
 
 shutil.copy(os.path.join('utils', 'conv.py'),
         os.path.join('..', 'venv', 'lib', 'site-packages', 'ultralytics', 'nn', 'modules', 'conv.py'))
+
 from utils.utils import xyxy2xywh
 from utils.pipeline import Pipeline
 import pandas as pd
@@ -16,7 +17,7 @@ from argparse import ArgumentParser
 
 class Statistics:
 
-    def __init__(self, conf_supreme=0.5, iou_supreme=0.3, conf_broken=0.5, iou_broken=0.1):
+    def __init__(self, conf_supreme=0.2, iou_supreme=0.3, conf_broken=0.5, iou_broken=0.1):
         """
         initializing pipeline with such parameters
         """
@@ -56,7 +57,7 @@ class Statistics:
 
         result_array = np.empty((0, 7))
 
-        print(['[+] Detecting broken ISOs'], flush=True)
+        print('[+] Detecting broken ISOs', flush=True)
         for img_file in tqdm(folder_from.iterdir()):
 
             img = cv2.imread(img_file.as_posix())
@@ -65,12 +66,13 @@ class Statistics:
 
             _, broken_iso = self.pipeline.predict(
                 img_path=img,
-                img_sizes_insulators=(1500, 2500),
-                img_sizes_broken=(640, 960)
+                img_sizes_insulators=(2500, 3500, 4500, 5500, 6500),
+                img_sizes_broken=(640, ),
+                tta=True
             )
 
             if len(broken_iso) == 0:
-                broken_iso = np.array([0., 0., 0., 0., 0.001, 0])
+                broken_iso = np.array([0., 0., 0., 0., 0.001, 0]).reshape(-1, 6)
 
             else:
                 # plotting detection
@@ -131,7 +133,7 @@ class Statistics:
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='innopolis-high-voltage-challenge')
-    parser.add_argument('indir', type=str, help='Input dir with images')
+    parser.add_argument('--indir', type=str, help='Input dir with images')
     args = parser.parse_args()
 
     s = Statistics()

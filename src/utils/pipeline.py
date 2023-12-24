@@ -55,7 +55,7 @@ class Pipeline:
 
         max_size = max(img.shape[:2])
 
-        img_sizes_broken = [img_size for img_size in img_sizes_insulators if img_size <= max_size]
+        img_sizes_insulators = [img_size for img_size in img_sizes_insulators if img_size <= max_size]
 
 
         result_isolator = self.supreme_yolo.predict(img, image_sizes=img_sizes_insulators)
@@ -79,7 +79,7 @@ class Pipeline:
             img_patch = img[y_u:y_l, x_u:x_l]
             # img_patch = cv2.cvtColor(img_patch, cv2.COLOR_RGB2BGR)
 
-            broken = self.broken_yolo.predict(img_patch, image_sizes=img_sizes_broken, tta=True)
+            broken = self.broken_yolo.predict(img_patch, image_sizes=img_sizes_broken, tta=tta)
             if len(broken)>0:
                 broken[..., [0, 2]] += x_u
                 broken[..., [1, 3]] += y_u
